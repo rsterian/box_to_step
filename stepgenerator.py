@@ -1,5 +1,18 @@
 import datetime
 import sys
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input", help="name of the input file of coordinates, coords.txt if not specified")
+parser.add_argument("-o", "--output", help="name of the output file, output.stp if not specified")
+args = parser.parse_args()
+
+inname = "coords.txt"
+outname = "output.stp"
+if args.input:
+	inname = args.input
+if args.output:
+	outname = args.output
 
 ABSRs = []
 MDGPRs = []
@@ -55,13 +68,13 @@ def box_init(ofile, ctr):
 
 	return(ctr);
 
-outputfile = open("output.stp", "w")
+outputfile = open(outname, "w")
 inputfile = open("template.stp", "r")
 
 for i in range(12): #12 lines before info
 	outputfile.write(inputfile.readline())
 
-outputfile.write("/* name */ 'output.stp',\n")
+outputfile.write("/* name */ '" + outname + "',\n")
 outputfile.write("/* time_stamp */ '" + 
 	str(datetime.datetime.now().isoformat()) + "',\n")
 
@@ -75,8 +88,6 @@ outputfile.write("\n")
 inputfile.close()
 ###done with the easy stuff
 
-#read in the coordinates from the trips input file
-#into an array of strings
 class Coord:
 	def __init__(self, x, y, z):
 		self.x = x
@@ -87,53 +98,29 @@ class Coord:
 		self.front = False
 		self.top = False
 
-infile = sys.stdin
-#print filename
-#infile = open(filename, "r")
+infile = open(inname, "r")
 
 num_boxes = int(infile.readline())
 
+coords = []
+xs = []
+ys = []
+zs = []
+
 for i in range(num_boxes):
-	coords = []
-	xs = []
-	ys = []
-	zs = []
 
-	for i in range(8):
-		tempx = ""
-		tempy = ""
-		tempz = ""
-
-		infile.read(1)
-		while True:
-			hold = infile.read(1)
-			if hold != ',':
-				tempx = tempx + hold
-			else:
-				break
-
-		while True:
-			hold = infile.read(1)
-			if hold != ',':
-				tempy = tempy + hold
-			else:
-				break
-
-		while True:
-			hold = infile.read(1)
-			if hold != ')':
-				tempz = tempz + hold
-			else:
-				break
-
-		infile.read(1)
+	line = infile.readline().split();
+	for i in line:
+		trip = i.strip("(), ").split(',')
+		tempx = int(trip[0])
+		tempy = int(trip[1])
+		tempz = int(trip[2])
 
 		xs.append(tempx)
 		ys.append(tempy)
 		zs.append(tempz)
 
 		coords.append(Coord(tempx, tempy, tempz))
-
 
 	MDGPRs.append(counter)
 
@@ -238,7 +225,6 @@ for i in range(num_boxes):
 
 
 	#direction
-	##############WRONG!!#################
 	xvec = "(1.,0.,0.)"
 	nxvec = "(-1.,0.,0.)"
 	yvec = "(0.,1.,0.)"
@@ -254,7 +240,6 @@ for i in range(num_boxes):
 		outputfile.write("#{}=DIRECTION('',{});\n".format(
 			counter, i))
 		counter += 1
-	#####################################
 
 
 	#cartesian_point
@@ -263,6 +248,10 @@ for i in range(num_boxes):
 	miny = sorted(ys)[0]
 	minz = sorted(zs)[0]
 	maxz = sorted(zs)[7]
+
+	xs[:] = []
+	ys[:] = []
+	zs[:] = []
 
 	for i in coords:
 		if i.x == minx:
@@ -325,6 +314,11 @@ for i in range(num_boxes):
 	outputfile.write("#{}=CARTESIAN_POINT('',(-1.,0.,{}));\n".format(
 		counter, minz))
 	counter += 1
+
+	cpoints[:] = []
+	coords[:] = []
+
+	#print(len(ABSRs), len(MDGPRs), len(coords), len(xs), len(ys), len(zs), len(cpoints), minx, miny, minz, maxz)
 
 infile.close()
 ######################################
