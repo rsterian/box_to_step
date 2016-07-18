@@ -1,0 +1,3 @@
+//replace this line with the number of boxes
+//for each box, enter the coordinates of each of the eight corners on the same line in the format (x1,y1,z2) (x2,y2,z2) ...
+//delete the comments
